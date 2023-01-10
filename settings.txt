@@ -1,0 +1,20 @@
+[TWITTER]
+consumerkey =Dt10BV9WWDyBocT4uvvYWSmre
+consumerSecret =9fMibYv7gwgrOdPRswN2FczdjSYQ6HBWgU0osYiSTF1aK34Z0E
+accessToken =39976777-ondyO0pc0bcL3WdHFLtn5ZkUV9BF1HsnKulqyRxt2
+accessTokenSecret =nXYv19Iv0DDBgX6piKb6WzdfAdv4nv0t2csV7jbvcIc0b
+
+developerAccpunt=ferrycode
+bearerToken=AAAAAAAAAAAAAAAAAAAAAO66jgEAAAAA1JFgSzDBulkjBRWKF6UAftZXuiM%3DKzSdjXm7DVLKHJ3pZXaSYd8naWd5v2hzLN7COoLlNMVhm6slaS
+
+#bearerToken=AAAAAAAAAAAAAAAAAAAAAPjYkAEAAAAArfdHD%2BoDzJO4Y%2F6bhJYvZfweQfM%3Dd1zXZE6FNcIgXeaWZLr79EOqp5cqLoShmL0DssrKlJThkYs4RD
+#accessToken=3190533581-yjhU0O8LDqLoKRqhqwOzzHYVdYBMTJC8cMRbf7f
+#accessTokenSecret =qnCXI9eiGentgfFuZ3uikOIY3PJZwxDr57jrcvRnHgwnb
+#consumerkey =dvWISXPCQStesoXf7cfC9e7mY
+#consumerSecret =Zgq6yG1AWdeiEn1jIfHiwQMMGGMrnGnfHV7JzoWEc0PxsIvSHN
+
+[MONGO]
+url=
+[KAFKA]
+bootstrap_servers=localhost:9092
+kafka_topic_name="twitter_topic"
