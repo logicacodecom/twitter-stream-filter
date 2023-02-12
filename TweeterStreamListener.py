@@ -93,19 +93,19 @@ if __name__ == '__main__':
     print("bearer_token = "+bearer_token)
 
     # using get_user with id
-    client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=True)
-    id = "869660137"
-    user = client.get_user(id=id)
-    print(f"The user name for user id {id} is {user.data.name}.")
+    #client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=True)
+    #id = "869660137"
+    #user = client.get_user(id=id)
+    #print(f"The user name for user id {id} is {user.data.name}.")
 
     # Search for queries in English language with 'elon musk' that are not retweets
-    query = 'elon musk lang:en -is:retweet'
+    #query = 'elon musk lang:en -is:retweet'
 
     # Granularity can be minute, hour, day
-    counts = client.get_recent_tweets_count(query=query, granularity='day')
+    #counts = client.get_recent_tweets_count(query=query, granularity='day')
 
-    for count in counts.data:
-        print(count)
+    #for count in counts.data:
+    #    print(count)
     # authentication
     #auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     #auth.set_access_token(access_token, access_token_secret)
@@ -122,9 +122,9 @@ if __name__ == '__main__':
     query = search_input
     #query_fname = ' '.join(query) # string
     #listener.filter(track=query)
-    rules = listener.get_rules()
-    for rule in rules:
-        listener.delete_rules(rules)
+    #rules = listener.get_rules()
+    #for rule in rules:
+    #    listener.delete_rules(rules)
 
     
     listener.add_rules(tweepy.StreamRule("apple lang:en"))
