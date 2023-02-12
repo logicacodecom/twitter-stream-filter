@@ -2,6 +2,7 @@ import json
 import tweepy
 import configparser
 import logging
+import logger
 
 import boto3
 from datetime import datetime
@@ -18,8 +19,9 @@ from tweepy import Stream
 #import lib
 #from twitter_stream import FilteredStream
 
-logger = logging.getLogger(__name__)
-
+# logger = logging.getLogger(__name__)
+lastStreamingDate = logger.logger()
+        
 
 
 config = configparser.ConfigParser(interpolation=None)
@@ -45,10 +47,15 @@ search_input= "nba, #NBA, NBA, #nba, Nba"
 
 
 
-class TweeterStreamListener(tweepy.StreamingClient):        
-    # on success
+class TweeterStreamListener(tweepy.StreamingClient):    
+    def __init__(self, bearer_token):
+        super().__init__(bearer_token= bearer_token)
+        
+        
     def on_data(self, data):
         tweet = json.loads(data)
+        
+        lastStreamingDate.info("")
         try:
             if 'text' in tweet.keys():
                 #print (tweet['text'])
@@ -112,6 +119,7 @@ if __name__ == '__main__':
 
     #api = tweepy.API(auth)
     #print(api.get_place_trends)
+    
     listener = TweeterStreamListener(bearer_token=bearer_token)
     # set twitter keys/tokens
     #auth = OAuthHandler(consumer_key, consumer_secret)
