@@ -1,183 +1,134 @@
 import json
-#from kafka import SimpleProducer, KafkaClient
-from kafka import KafkaProducer
 import tweepy
 import configparser
-from pymongo import MongoClient
 import logging
 
+import boto3
+from datetime import datetime
+import calendar
+import random
+import time
+import sys
+import tweepy
+#from tweepy.streaming import StreamListener
+from tweepy import OAuthHandler
+from tweepy import Stream
 
-#from dotenv import load_dotenv
-
-#load_dotenv()
+#from lib import twitter_stream.FilteredStream
+#import lib
+#from twitter_stream import FilteredStream
 
 logger = logging.getLogger(__name__)
 
 
 
-config = configparser.ConfigParser()
+config = configparser.ConfigParser(interpolation=None)
+
 config.read('settings.txt')
 
-consumer_key = config['TWITTER']['consumerKey']
-consumer_secret = config['TWITTER']['consumerSecret']
-access_key = config['TWITTER']['accessToken']
-access_secret = config['TWITTER']['accessTokenSecret']
-bearerToken = config['TWITTER']['accessTokenSecret']
+consumer_key = config['TWITTER']['consumer_key']
+consumer_secret = config['TWITTER']['consumer_secret']
+access_token = config['TWITTER']['access_token']
+access_token_secret = config['TWITTER']['access_token_secret']
+bearer_token = config['TWITTER']['bearer_token']
 
-bootstrap_servers = config['KAFKA']['bootstrap_servers']
-kafka_topic_name = config['KAFKA']['kafka_topic_name']
-#kafka_topic_name="twitter_topic" #name of kafka's server topic name, noit topics to search in 
-
-producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
+aws_region_name = config['AWS']['region_name']
+aws_access_key_id =  config['AWS']['access_key_id']
+aws_secret_access_key = config['AWS']['secret_access_key']
+aws_kinesis_stream_name = config['AWS']['kinesis_stream_name']
 
 search_input= "nba, #NBA, NBA, #nba, Nba"
-
-
-""" class TwitterStreamer():
-    def stream_data(self):
-        logger.info(f"{kafka_topic_name} Stream starting for {search_input}...")
-
-        twitter_stream = TweeterStreamListener(consumer_key, consumer_secret, access_token, access_token_secret)
-        twitter_stream.filter(track=[search_input]) """
 
 # Note: Some of the imports are external python libraries. They are installed on the current machine.
 # If you are running multinode cluster, you have to make sure that these libraries
 # and currect version of Python is installed on all the worker nodes.
 
 
-class TweeterStreamListener(tweepy.StreamingClient):
-    """ A class to read the twitter stream and push it to Kafka"""
 
-    """ def __init__(tweepy.Stream):
-        config = configparser.ConfigParser()
-        config.read('settings.txt')
-        bootstrap_servers = config['KAFKA']['bootstrap_servers']
-
-        kafka_topic_name = config['KAFKA']['kafka_topic_name']
-        producer = KafkaProducer(bootstrap_servers=bootstrap_servers) """
-
-        #self.api = api
-        #self.topic = topic
-
-        #super(tweepy.Stream, self).__init__()
-        #self.producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
-        #self.producer = KafkaProducer(
-        #    value_serializer=lambda m: json.dumps(m).encode('ascii'))
-        #self.producer = SimpleProducer(client, async = True,
-        #                  batch_send_every_n = 1000,
-        #                  batch_send_every_t = 10)
-    def on_connect(self):
-        print(">>>>> Twitter Connected")
-        return super().on_connect()
+class TweeterStreamListener(tweepy.StreamingClient):        
+    # on success
+    def on_data(self, data):
+        tweet = json.loads(data)
+        try:
+            if 'text' in tweet.keys():
+                #print (tweet['text'])
+                # message = str(tweet)+',\n'
+                message = json.dumps(tweet)
+                message = message + ",\n"
+                print(message)
+                '''
+                kinesis_client.put_record(
+                    DeliveryStreamName=aws_kinesis_stream_name,
+                    Record={
+                    'Data': message
+                    }
+                )
+                '''
+        except (AttributeError, Exception) as e:
+                print (e)
+        return True
+    
+    def on_status(self, status):
+        print(status.id)
 
     def on_tweet(self, tweet):
-        print(">>>>> Twitter On Tweet = "+tweet)
-        return super().on_tweet(tweet)
-    
-    
+        print(tweet.id)
 
-    def on_status(self, status):
-        """ This method is called whenever new data arrives from live stream.
-        We asynchronously push this data to kafka queue"""
-        try:
-            print(kafka_topic_name)
-            producer.send(str(kafka_topic_name), status._json)
-        except Exception as e:
-            print(e)
-            return False
-        return True
-    
-    def on_data(self, data):
-        # Producer produces data for consumer
-        # Data comes from Twitter
-        try:
-            print(data)
-            producer.send(kafka_topic_name, data.encode('utf-8')) #chasnge to str(self.topic) instead of kafka_topic_name
-            return True
-        except Exception as e:
-            print(e)
-            return False
-        return True
-
-    def on_error(self, status_code):
-        print("Error received in kafka producer:" )
-        print(status_code)
-        return True  # Don't kill the stream
-
-    def on_timeout(self):
-        return True  # Don't kill the stream
+    # on failure
+    def on_error(self, status):
+        print(status)
 
 
-def mongoreadid(collection, field):
-    """ reads a specific field in a specific collection from mongodb """
-    config = configparser.ConfigParser()
-    config.read('settings.txt')
-    mongo_url = config['MONGO']['url']
-    client = MongoClient(mongo_url)
-    db = client['admin']
-    ids = db[collection]
-    return list(map((lambda id: id[field]), ids.find()))
-
-""" 
-def stream_id(id):
-    return tweepy.Stream(auth, listener=TweeterStreamListener(api, id)) """
-
-
-""" def mongoread(database, collection, field):
-    #reads a specific field in a specific collection from mongodb 
-    config = configparser.ConfigParser()
-    config.read('twitter-app-credentials.txt')
-    mongo_url = config['MONGO']['url']
-    client = MongoClient(mongo_url)
-    db = client[database]
-    ids = db[collection]
-    return list(map((lambda id: id[field]), ids.find())) """
 
 
 if __name__ == '__main__':
+    # create kinesis client connection
+    '''
+    kinesis_client = boto3.client('firehose',
+                                  region_name=aws_region_name,  # enter the region
+                                  aws_access_key_id=aws_access_key_id,  # fill your AWS access key id
+                                  aws_secret_access_key=aws_secret_access_key)  # fill you aws secret access key
+    '''
+    # create instance of the tweepy tweet stream listener
+    print("bearer_token = "+bearer_token)
 
-    # Read the credententials from 'twitter-app-credentials.txt' file
-    # config = configparser.ConfigParser()
-    # config.read('settings.txt')
-    # consumer_key = config['TWITTER']['consumerKey']
-    # consumer_secret = config['TWITTER']['consumerSecret']
-    # access_key = config['TWITTER']['accessToken']
-    # access_secret = config['TWITTER']['accessTokenSecret']
+    # using get_user with id
+    client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=True)
+    id = "869660137"
+    user = client.get_user(id=id)
+    print(f"The user name for user id {id} is {user.data.name}.")
 
-    # Create Auth object
+    # Search for queries in English language with 'elon musk' that are not retweets
+    query = 'elon musk lang:en -is:retweet'
+
+    # Granularity can be minute, hour, day
+    counts = client.get_recent_tweets_count(query=query, granularity='day')
+
+    for count in counts.data:
+        print(count)
+    # authentication
     #auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-    #auth.set_access_token(access_key, access_secret)
+    #auth.set_access_token(access_token, access_token_secret)
+
     #api = tweepy.API(auth)
+    #print(api.get_place_trends)
+    listener = TweeterStreamListener(bearer_token=bearer_token)
+    # set twitter keys/tokens
+    #auth = OAuthHandler(consumer_key, consumer_secret)
+    #auth.set_access_token(access_token, access_token_secret)
+    # create instance of the tweepy stream
+    #stream = Stream(auth, listener)
+    # search twitter for tags or keywords from cli parameters
+    query = search_input
+    #query_fname = ' '.join(query) # string
+    #listener.filter(track=query)
+    rules = listener.get_rules()
+    for rule in rules:
+        listener.delete_rules(rules)
 
-    # Create stream and bind the listener to it
-    #stream = tweepy.Stream(auth, listener = TweeterStreamListener(api,""))
+    
+    listener.add_rules(tweepy.StreamRule("apple lang:en"))
+    listener.filter()
+    #listener.sample()
+    #listener.filter() #runs the stream
 
-    #stream_now = TweeterStreamListener(consumer_key, consumer_secret, access_key, access_secret)
-    streaming_client = TweeterStreamListener(bearer_token=bearerToken)
-    #streaming_client.add_rules(tweepy.StreamRule("Tweepy"))
-    streaming_client.sample()
-
-
-    #stream_now.add_rules(tweepy.StreamRule("#Bitcoin")) #adding the rules
-    #stream_now.filter() #runs the stream
-    #Custom Filter rules pull all traffic for those filters in real time.
-    #stream_now.filter(track = ['love', 'hate'])
-    #stream_now.filter(locations=[-180,-90,180,90], languages = ['en'])
-
-    """  
-    # Read the users' ids form mongodb
-    id_list = mongoreadid('ids', 'id')
-    # Read the topics form mongodb
-    topic_list = mongoreadid('topics', 'topic')
-    topic_list = ['cars']
-    # Create stream and bind the listener to it
-    stream = list(map(lambda id: stream_id(id), id_list))
-    # Custom Filter rules pull all traffic for those filters in real time.
-    # stream.filter(track = ['love', 'hate'], languages = ['en'])
-    keywords = mongoread('admin', 'keywords', 'keywords')
-    try:
-        stream[0].filter(track=['madrid'], languages=['en'])
-        stream[1].filter(track=['neymare'], languages=['en'])
-        # map(lambda id : stream[id].filter(track=topic_list, languages = ['en']) , id_list)
-    except Exception as e:
-        print(e) """

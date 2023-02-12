@@ -1,1 +1,1 @@
-# stream_sent_analysis
+# twitter-stream-filter
